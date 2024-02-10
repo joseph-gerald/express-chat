@@ -5,11 +5,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style/index.css">
+    <script src="script.js" defer></script>
     <title>Hello World</title>
 </head>
 
 <body>
-    You are connected
+    <div class="container">
+        <small>Express Chat</small>
+        <div class="chat">
+            <small id="date">Saturday 9:41 AM</small>
+            <div class="message in">
+                <b>
+                    ⭐
+                </b>
+                <div class="message-container">
+                    <small>John Doe</small>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
+                        labore et dolore magna aliqua.</p>
+                </div>
+            </div>
+            <div class="message out">
+                <div class="message-container">
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
+                        labore et dolore magna aliqua.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 <script>
     const isLocalhost = window.location.host.indexOf("localhost") == 0;

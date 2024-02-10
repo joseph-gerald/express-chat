@@ -1,3 +1,10 @@
+:root {
+    --primary: #007aff;
+}
+
+.apple {
+    --primary: #34c759;
+}
 
 body {
     display: flex;
@@ -115,7 +122,7 @@ small {
 
 .out .message-container p {
     color: white;
-    background-color: #007aff;
+    background: var(--primary);
 
     margin-left: auto;
     margin-right: 5px;
@@ -165,7 +172,7 @@ small {
     height: 20px;
     width: 20px;
 
-    background: #007aff;
+    background: var(--primary);
     border-bottom-left-radius: 15px;
 }
 

@@ -1,13 +1,14 @@
+
 body {
     display: flex;
 
     background-color: white;
     font-family: "San Francisco", sans-serif;
 
-    margin: 40px 30px;
-    margin-top: 20px;
+    margin: 0 20px;
+    margin-bottom: 0;
 
-    height: calc(100vh - 60px);
+    height: calc(100vh);
 }
 
 sb {
@@ -27,14 +28,29 @@ sb {
     justify-content: center;
 }
 
+#chat::-webkit-scrollbar {
+    display: none;
+}
+
 #chat {
+    scrollbar-width: none;  /* Firefox */
     width: 100%;
     height: 100%;
 
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
 
     gap: 10px;
+}
+
+#chat::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 30px;
+    background: linear-gradient(0deg, rgba(255, 255, 255, 0) 0%, white 100%);
 }
 
 /* MESSAGE */
@@ -83,11 +99,18 @@ small {
 
     padding: 10px;
     border-radius: 16px;
+
+    width: fit-content;
 }
 
 .out .message-container {
     margin-left: auto;
     max-width: 90%;
+
+    float: right;
+    display: flex;
+    flex-direction: column;
+    align-items: end;
 }
 
 .out .message-container p {
@@ -95,6 +118,7 @@ small {
     background-color: #007aff;
 
     margin-left: auto;
+    margin-right: 5px;
 }
 
 /* TEXT BUBBLE TAIL */
@@ -107,7 +131,7 @@ small {
     z-index: -1;
 
     bottom: 0;
-    left: 22px;
+    left: 23px;
 
     height: 20px;
     width: 20px;
@@ -122,7 +146,7 @@ small {
     z-index: 0;
 
     bottom: 0;
-    left: 20.5px;
+    left: 21.5px;
 
     width: 10px;
     height: 20px;
@@ -136,7 +160,7 @@ small {
 .out .message-container:before {
     left: auto;
     bottom: 0;
-    right: -12px;
+    right: -7px;
 
     height: 20px;
     width: 20px;
@@ -148,7 +172,7 @@ small {
 .out .message-container::after {
     left: auto;
     bottom: 0;
-    right: -14px;
+    right: -9px;
 
     width: 14px;
     height: 20px;
@@ -160,14 +184,24 @@ small {
 /* INPUT */
 
 .input {
+    padding: 0 calc(50vw - 50%);
     width: 100%;
+    height: 60px;
+    padding-top: 5px;
+    z-index: 4;
+
+    position: absolute;
+    bottom: 0;
+
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
 }
 
 .input #text {
     border-radius: 100px;
-    border: 1px solid #e9e9eb;
+    border: 1.75px solid rgba(0, 0, 0, 0.1);
 
-    width: 100%;
+    width: calc(100% - 22px);
     height: 20px;
     padding: 5px 10px;
 
@@ -175,4 +209,11 @@ small {
     font-family: "San Francisco", sans-serif;
     font-weight: 300;
     font-size: 15px;
+
+    backdrop-filter: blur(20px);
+    background-color: transparent;
+}
+
+.padder {
+    padding: 30px 0;
 }

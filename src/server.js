@@ -1,5 +1,4 @@
 const emojis = [..."😷🤒🤕🤢🤮🤧😢😭😨🤯🥵🥶🤑😴🥰🤣🤡💀👽👾🤖👶💋❤️💔💙💚💛🧡💜🖤💤💢💣💥💦💨💫👓💍💎👑🎓🧢💄💍💎🐵🦒🐘🐀🍆🍑🍒🍓⚽🎯🔊🔇🔋🔌💻💰💯"];
-const emojiPattern = /\p{Emoji}/u;
 
 function getEmojiIndex(string) {
     const index = string.split("").map(x => x.charCodeAt()).reduce((a, b) => a + b);
@@ -10,20 +9,26 @@ let clients = [];
 const users = [];
 
 function handleConnection(client, request) {
-    const headers = request.headers;
     let user = null;
 
     clients.push(client);
 
     function onClose() {
         console.log(`Connection Closed`);
-        
+
         var position = clients.indexOf(client);
         clients.splice(position, 1);
         if (user) {
             var userPosition = users.indexOf(user);
             users.splice(userPosition, 1);
         }
+
+        users.forEach(x => {
+            x.client.send(JSON.stringify({
+                type: "system",
+                content: `${user.name} / ${user.emoji} has disconnected`
+            }));
+        });
     }
 
     function onMessage(data) {
@@ -38,32 +43,44 @@ function handleConnection(client, request) {
 
         if (!user) {
             const json = JSON.parse(message);
+            const id = json.hash.substring(0, 8) + Math.random().toString(36).substring(4);
             console.log(json.hash)
 
             user = {
-                emoji: getEmojiIndex(json.hash),
+                emoji: emojis[getEmojiIndex(json.hash)],
                 name: json.name,
                 hash: json.hash,
-                client: client
+                client: client,
+                id
             }
 
             users.push(user);
+
+            users.forEach(x => {
+                x.client.send(JSON.stringify({
+                    type: "system",
+                    content: `${user.name} / ${user.emoji} has connected`
+                }));
+            });
             return;
         }
+
+        const displayname = user.name;
+        const emoji = user.emoji;
+        const id = user.id;
 
         for (const user of users.filter(x => x.client != client)) {
             user.client.send(JSON.stringify({
                 type: "message",
-                emoji: emojis[user.emoji],
-                name: user.name,
-                message: message
+                emoji: emoji,
+                name: displayname,
+                message: message,
+                id
             }));
         }
     }
 
     client.on('message', data => {
-
-        client.send(JSON.stringify({ type: "connected" }));
         try {
             onMessage(data.toString())
         } catch (error) {

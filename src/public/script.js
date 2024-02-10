@@ -2,7 +2,7 @@
 const chat = document.getElementById("chat");
 const text = document.getElementById("text");
 let displayname = localStorage.getItem("displayname");
-const isApple = !/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+const isApple = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
 
 let lastMessageTimestamp = Date.now();
 

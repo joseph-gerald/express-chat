@@ -1,6 +1,74 @@
-const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+// Chat Client
 const chat = document.getElementById("chat");
 const text = document.getElementById("text");
+let displayname = localStorage.getItem("displayname");
+
+if (!displayname) {
+    const elm = document.createElement("small");
+    elm.innerHTML = "Create a display name to start chatting!";
+    chat.appendChild(elm);
+
+    receiveMessage("🤖", "Chat Bot", "Choose a display name to start");
+
+    text.addEventListener("keyup", event => {
+        if (event.key === "Enter") {
+            displayname = text.value;
+            localStorage.setItem("displayname", text.value);
+
+            chat.innerHTML = "";
+            text.value = "";
+
+            connect();
+        }
+    });
+} else {
+    connect();
+}
+
+function connect() {
+    const isLocalhost = window.location.host.indexOf("localhost") == 0;
+    const protocol = isLocalhost ? "ws://" : "wss://";
+
+    const socket = new WebSocket(protocol + window.location.host);
+
+    socket.onclose = () => {
+        location.reload();
+    }
+
+    socket.onopen = _ => {
+        let keepaliveCount = 0;
+        setInterval(() => { socket.send("keepalive/" + keepaliveCount++); }, 60 * 1000);
+
+        insertDateDisplay();
+
+        let refreshId = setInterval(() => {
+            try {
+                if (window.fp == null) return;
+                socket.send(JSON.stringify({ ...window.fp, name: displayname }));
+                clearInterval(refreshId);
+            } catch (ignore) { }
+        }, 100);
+    }
+
+    socket.onmessage = event => {
+        const data = JSON.parse(event.data);
+        if (data.type == "message") {
+            receiveMessage(data.emoji, data.name, data.message);
+        }
+    }
+
+    text.addEventListener("keyup", event => {
+        if (event.key === "Enter") {
+            sendMessage(text.value);
+            socket.send(text.value);
+            text.value = "";
+        }
+    });
+}
+
+// Front End
+
+const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function insertDateDisplay() {
     const elm = document.createElement("small");
@@ -55,36 +123,3 @@ function sendMessage(message) {
 
     chat.appendChild(elm);
 }
-
-const isLocalhost = window.location.host.indexOf("localhost") == 0;
-const protocol = isLocalhost ? "ws://" : "wss://";
-
-const socket = new WebSocket(protocol + window.location.host);
-
-socket.onclose = () => {
-    location.reload();
-}
-
-socket.onopen = socket => {
-    let keepaliveCount = 0;
-    setInterval(() => { socket.send("keepalive/" + keepaliveCount++); }, 60 * 1000);
-
-    insertDateDisplay();
-}
-
-
-
-socket.onmessage = event => {
-    const data = JSON.parse(event.data);
-    if (data.type == "message") {
-        receiveMessage(data.emoji, data.name, data.message);
-    }
-}
-
-text.addEventListener("keyup", event => {
-    if (event.key === "Enter") {
-        sendMessage(text.value);
-        socket.send(text.value);
-        text.value = "";
-    }
-});

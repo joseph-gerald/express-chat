@@ -14,26 +14,11 @@
     <div class="container">
         <small><sb>Express Chat</sb></small>
         <div id="chat">
-            
+
+        </div>
+        <div class="input">
+            <input id="text" type="text" placeholder="Express Chat">
         </div>
     </div>
 </body>
-<script>
-    const isLocalhost = window.location.host.indexOf("localhost") == 0;
-    const protocol = isLocalhost ? "ws://" : "wss://";
-
-    const socket = new WebSocket(protocol + window.location.host);
-
-    socket.onclose = () => {
-        location.reload();
-    }
-
-    socket.onopen = () => {
-        let keepaliveCount = 0;
-        setInterval(() => { socket.send("keepalive/" + keepaliveCount++); }, 60 * 1000);
-
-        console.log("connected");
-    }
-</script>
-
 </html>

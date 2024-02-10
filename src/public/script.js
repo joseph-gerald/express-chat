@@ -1,5 +1,6 @@
 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const chat = document.getElementById("chat");
+const text = document.getElementById("text");
 
 function insertDateDisplay() {
     const elm = document.createElement("small");
@@ -55,6 +56,35 @@ function sendMessage(message) {
     chat.appendChild(elm);
 }
 
-insertDateDisplay();
-receiveMessage("👋", "Bot", "Hello, how can I help you today?");
-sendMessage("I need help with my order.");
+const isLocalhost = window.location.host.indexOf("localhost") == 0;
+const protocol = isLocalhost ? "ws://" : "wss://";
+
+const socket = new WebSocket(protocol + window.location.host);
+
+socket.onclose = () => {
+    location.reload();
+}
+
+socket.onopen = socket => {
+    let keepaliveCount = 0;
+    setInterval(() => { socket.send("keepalive/" + keepaliveCount++); }, 60 * 1000);
+
+    insertDateDisplay();
+}
+
+
+
+socket.onmessage = event => {
+    const data = JSON.parse(event.data);
+    if (data.type == "message") {
+        receiveMessage(data.emoji, data.name, data.message);
+    }
+}
+
+text.addEventListener("keyup", event => {
+    if (event.key === "Enter") {
+        sendMessage(text.value);
+        socket.send(text.value);
+        text.value = "";
+    }
+});

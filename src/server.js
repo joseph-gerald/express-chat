@@ -20,7 +20,9 @@ function handleConnection(client, request) {
             return;
         }
 
+        const message = data;
 
+        console.log(`Received: ${message}`);
     }
 
     client.on('message', data => {

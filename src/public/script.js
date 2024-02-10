@@ -9,6 +9,7 @@ let lastMessageTimestamp = Date.now();
 if (!displayname) {
     const elm = document.createElement("small");
     elm.innerHTML = "Create a display name to start chatting!";
+    elm.style.marginTop = "20px";
     chat.appendChild(elm);
 
     receiveMessage("🤖", "System", "Choose a display name to start");

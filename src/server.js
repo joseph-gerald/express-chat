@@ -25,8 +25,10 @@ function handleConnection(client, request) {
 
         users.forEach(x => {
             x.client.send(JSON.stringify({
-                type: "system",
-                content: `${user.name} / ${user.emoji} has disconnected`
+                type: "disconnect",
+                name: user.name,
+                emoji: user.emoji,
+                id: user.id
             }));
         });
     }
@@ -40,9 +42,9 @@ function handleConnection(client, request) {
         }
 
         const message = data;
+        const json = JSON.parse(message);
 
         if (!user) {
-            const json = JSON.parse(message);
             const id = json.hash.substring(0, 8) + Math.random().toString(36).substring(4);
             console.log(json.hash)
 
@@ -69,14 +71,29 @@ function handleConnection(client, request) {
         const emoji = user.emoji;
         const id = user.id;
 
-        for (const user of users.filter(x => x.client != client)) {
-            user.client.send(JSON.stringify({
-                type: "message",
-                emoji: emoji,
-                name: displayname,
-                message: message,
-                id
-            }));
+        switch (json.type) {
+            case "send":
+                for (const user of users.filter(x => x.client != client)) {
+                    user.client.send(JSON.stringify({
+                        type: "message",
+                        emoji: emoji,
+                        name: displayname,
+                        message: json.content,
+                        id
+                    }));
+                }
+                break;
+            case "type":
+                for (const user of users.filter(x => x.client != client)) {
+                    user.client.send(JSON.stringify({
+                        type: "type",
+                        emoji: emoji,
+                        name: displayname,
+                        message: json.content,
+                        id
+                    }));
+                }
+                break;
         }
     }
 

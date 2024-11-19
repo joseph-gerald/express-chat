@@ -49,6 +49,7 @@ sb {
     flex-direction: column;
 
     gap: 10px;
+    line-break: anywhere;
 }
 
 #chat::after {
@@ -118,10 +119,11 @@ small {
     display: flex;
     flex-direction: column;
     align-items: end;
+
+    color: white;
 }
 
 .out .message-container p {
-    color: white;
     background: var(--primary);
 
     margin-left: auto;
@@ -186,6 +188,13 @@ small {
 
     background: white;
     border-bottom-left-radius: 15px;
+}
+
+/* MESSAGE TYPES */
+
+.link {
+    color: inherit;
+
 }
 
 /* INPUT */

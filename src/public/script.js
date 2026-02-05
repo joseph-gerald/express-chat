@@ -1,6 +1,7 @@
 // Chat Client
 const chat = document.getElementById("chat");
 const text = document.getElementById("text");
+const version = "1.1.0";
 let displayname = localStorage.getItem("displayname");
 const isApple = /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent);
 
@@ -36,10 +37,26 @@ if (!displayname) {
 }
 
 function connect() {
-    const isLocalhost = window.location.host.indexOf("localhost") == 0;
+    const isLocalhost = !window.location.protocol.includes("s");
     const protocol = isLocalhost ? "ws://" : "wss://";
 
     const socket = new WebSocket(protocol + window.location.host);
+
+
+    text.addEventListener("paste", e => {
+        const reader = new FileReader();
+        reader.readAsDataURL(e.clipboardData.files[0])
+
+        reader.addEventListener("load", () => {
+            socket.send(JSON.stringify({
+                type: "img",
+                content: reader.result
+            }));
+
+            sendMessage(reader.result, true);
+        });
+    })
+
 
     socket.onclose = () => {
         location.reload();
@@ -62,7 +79,7 @@ function connect() {
 
     socket.onmessage = event => {
         const data = JSON.parse(event.data);
-        
+
         if (Date.now() - lastMessageTimestamp > 1000 * 60) {
             insertDateDisplay();
         }
@@ -82,14 +99,21 @@ function connect() {
                     updateTyping(null, null, "", data.id)
                 }
                 break;
-            case "message":    
+            case "message":
                 receiveMessage(data.emoji, data.name, data.message, data.id);
-    
+
                 lastMessageTimestamp = Date.now();
                 chat.scrollTop = chat.scrollHeight;
+                break;
+            case "img":
+                receiveMessage(data.emoji, data.name, data.content, data.id, true);
+
+                lastMessageTimestamp = Date.now();
+                chat.scrollTop = chat.scrollHeight;
+                break;
             case "type":
                 updateTyping(data.emoji, data.name, data.message, data.id);
-    
+
                 lastMessageTimestamp = Date.now();
                 chat.scrollTop = chat.scrollHeight;
         }
@@ -98,6 +122,7 @@ function connect() {
     }
 
     let typingTimeout = null;
+    let lastValue = "";
 
     text.addEventListener("keyup", event => {
         if (event.key === "Enter" && text.value.length > 0) {
@@ -107,21 +132,24 @@ function connect() {
                 content: text.value
             }));
             text.value = "";
-            
+
             socket.send(JSON.stringify({
                 type: "type",
                 content: ""
             }));
 
+
             lastMessageTimestamp = Date.now();
             chat.scrollTop = chat.scrollHeight;
-        } else {
+        } else if (lastValue != text.value) {
             socket.send(JSON.stringify({
                 type: "type",
                 content: text.value
             }));
         }
-            
+
+        lastValue = text.value
+
         if (typingTimeout) clearInterval(typingTimeout);
 
         typingTimeout = setTimeout(() => {
@@ -137,7 +165,7 @@ function connect() {
 
 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-function updatePadder() {   
+function updatePadder() {
     const oldPadder = padder;
     padder.remove();
     chat.appendChild(oldPadder);
@@ -152,7 +180,7 @@ function insertDateDisplay(init = false) {
     const minute = date.getMinutes();
 
     if (init) {
-        elm.innerHTML = `Express Chat - 1.0.0<br/><sb>Today</sb> ${hour}:${minute} ${meridiem}`;
+        elm.innerHTML = `Express Chat - ${version}<br/><sb>Today</sb> ${hour}:${minute} ${meridiem}`;
         elm.style.marginTop = "20px";
     } else {
         elm.innerHTML = `<sb>Today</sb> ${hour}:${minute} ${meridiem}`;
@@ -178,7 +206,7 @@ function stackMessages(texts, incoming) {
                 text.style.borderRadius = incoming ? "5px 15px 15px 5px" : "15px 5px 5px 15px";
         }
     }
-    
+
     updatePadder();
 }
 
@@ -189,9 +217,9 @@ function updateTyping(emoji, name, message, sender_id) {
         if (previousMessage && previousMessage.tagName === "DIV" && previousMessage.getAttribute("sender_id") === sender_id && previousMessage.getAttribute("typing")) {
             const p = document.createElement("p");
             p.innerHTML = handleMessageHTML(message);
-            
+
             if (message == "") {
-                setTimeout(() => {    
+                setTimeout(() => {
                     previousMessage.animate([
                         {
                         },
@@ -213,10 +241,10 @@ function updateTyping(emoji, name, message, sender_id) {
 
                 return
             }
-    
+
             previousMessage.children[1].children[1].innerText = message;
             typingElm(previousMessage);
-    
+
             stackMessages([...previousMessage.children[1].children].splice(1), true);
             return
         }
@@ -252,7 +280,7 @@ function updateTyping(emoji, name, message, sender_id) {
     addToChat(elm);
 }
 
-function receiveMessage(emoji, name, message, sender_id) {
+function receiveMessage(emoji, name, message, sender_id, isImage) {
     const previousMessage = chat.children[chat.children.length - 2];
 
     if (message == "") return;
@@ -261,9 +289,18 @@ function receiveMessage(emoji, name, message, sender_id) {
         if (!previousMessage.getAttribute("typing")) {
             console.log(previousMessage)
 
-            const p = document.createElement("p");
-            p.innerHTML = handleMessageHTML(message);
-            if (p.innerText != message) return;
+            let p = null;
+
+
+            if (isImage) {
+                p = document.createElement("img");
+                p.src = message;
+            } else {
+                p = document.createElement("p");
+                p.innerHTML = handleMessageHTML(message);
+
+                if (p.innerText != message) return;
+            }
 
             previousMessage.children[1].appendChild(p);
             flashElm(previousMessage);
@@ -284,9 +321,9 @@ function receiveMessage(emoji, name, message, sender_id) {
 
             setTimeout(() => {
                 previousMessage.remove();
-                receiveMessage(emoji, name, message, sender_id)
+                receiveMessage(emoji, name, message, sender_id, isImage)
             }, 100)
-            
+
             return;
         }
     }
@@ -305,10 +342,18 @@ function receiveMessage(emoji, name, message, sender_id) {
     const username = document.createElement("small");
     username.innerText = name;
 
-    const p = document.createElement("p");
-    p.innerHTML = handleMessageHTML(message);
+    let p = null;
 
-    if (p.innerText != message) return;
+
+    if (isImage) {
+        p = document.createElement("img");
+        p.src = message;
+    } else {
+        p = document.createElement("p");
+        p.innerHTML = handleMessageHTML(message);
+
+        if (p.innerText != message) return;
+    }
 
     messageContainer.appendChild(username);
     messageContainer.appendChild(p);
@@ -388,17 +433,26 @@ function handleMessageHTML(html) {
     return html;
 }
 
-function sendMessage(message) {
+function sendMessage(message, isImage) {
     const previousMessage = chat.children[chat.children.length - 2];
 
     if (previousMessage && previousMessage.tagName === "DIV" && !previousMessage.getAttribute("sender_id")) {
         console.log(previousMessage)
-        const p = document.createElement("p");
-        p.innerHTML = handleMessageHTML(message);
+
+        let p = null;
+
+
+        if (isImage) {
+            p = document.createElement("img");
+            p.src = message;
+        } else {
+            p = document.createElement("p");
+            p.innerHTML = handleMessageHTML(message);
+        }
 
         previousMessage.children[0].appendChild(p);
         flashElm(previousMessage);
-        
+
         stackMessages([...previousMessage.children[0].children], false);
         return
     }
@@ -408,9 +462,19 @@ function sendMessage(message) {
 
     const messageContainer = document.createElement("div");
     messageContainer.className = "message-container";
+    
+    let p = null;
 
-    const p = document.createElement("p");
-    p.innerHTML = handleMessageHTML(message);
+
+    if (isImage) {
+        p = document.createElement("img");
+        p.src = message;
+    } else {
+        p = document.createElement("p");
+        p.innerHTML = handleMessageHTML(message);
+
+        if (p.innerText != message) return;
+    }
 
     messageContainer.appendChild(p);
 
@@ -421,6 +485,6 @@ function sendMessage(message) {
     addToChat(elm)
 }
 
-window.addEventListener("load", () => { 
+window.addEventListener("load", () => {
     setTimeout(() => { text.focus(); console.log("FOCUS") }, 1000);
 });

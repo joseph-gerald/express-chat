@@ -72,6 +72,17 @@ function handleConnection(client, request) {
         const id = user.id;
 
         switch (json.type) {
+            case "img":
+                for (const user of users.filter(x => x.client != client)) {
+                    user.client.send(JSON.stringify({
+                        type: "img",
+                        emoji: emoji,
+                        name: displayname,
+                        content: json.content,
+                        id
+                    }));
+                }
+                break;
             case "send":
                 for (const user of users.filter(x => x.client != client)) {
                     user.client.send(JSON.stringify({

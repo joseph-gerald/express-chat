@@ -45,15 +45,18 @@ function connect() {
 
     text.addEventListener("paste", e => {
         const reader = new FileReader();
+        const fileName = e.clipboardData.files[0].name;
+
         reader.readAsDataURL(e.clipboardData.files[0])
 
         reader.addEventListener("load", () => {
             socket.send(JSON.stringify({
+                name: fileName,
                 type: "img",
                 content: reader.result
             }));
 
-            sendMessage(reader.result, true);
+            sendMessage(reader.result, true, fileName);
         });
     })
 
@@ -106,7 +109,7 @@ function connect() {
                 chat.scrollTop = chat.scrollHeight;
                 break;
             case "img":
-                receiveMessage(data.emoji, data.name, data.content, data.id, true);
+                receiveMessage(data.emoji, data.name, data.content, data.id, true, data.file_name);
 
                 lastMessageTimestamp = Date.now();
                 chat.scrollTop = chat.scrollHeight;
@@ -280,7 +283,7 @@ function updateTyping(emoji, name, message, sender_id) {
     addToChat(elm);
 }
 
-function receiveMessage(emoji, name, message, sender_id, isImage) {
+function receiveMessage(emoji, name, message, sender_id, isImage, fileName) {
     const previousMessage = chat.children[chat.children.length - 2];
 
     if (message == "") return;
@@ -293,13 +296,22 @@ function receiveMessage(emoji, name, message, sender_id, isImage) {
 
 
             if (isImage) {
-                p = document.createElement("img");
-                p.src = message;
+                if (message.startsWith("data:image")) {
+                    p = document.createElement("img");
+                    p.src = message;
+                } else {
+                    const link = document.createElement("a");
+                    link.href = message;
+                    link.target = "_blank";
+                    link.innerText = fileName || "View Image";
+                    p = document.createElement("p");
+                    p.appendChild(link);
+                }
             } else {
                 p = document.createElement("p");
                 p.innerHTML = handleMessageHTML(message);
 
-                if (p.innerText != message) return;
+                if (p.innerText.replaceAll(" ", "").length != message.replaceAll(" ", "").length) return;
             }
 
             previousMessage.children[1].appendChild(p);
@@ -346,13 +358,22 @@ function receiveMessage(emoji, name, message, sender_id, isImage) {
 
 
     if (isImage) {
-        p = document.createElement("img");
-        p.src = message;
+        if (message.startsWith("data:image")) {
+            p = document.createElement("img");
+            p.src = message;
+        } else {
+            const link = document.createElement("a");
+            link.href = message;
+            link.target = "_blank";
+            link.innerText = fileName || "View Image";
+            p = document.createElement("p");
+            p.appendChild(link);
+        }
     } else {
         p = document.createElement("p");
         p.innerHTML = handleMessageHTML(message);
 
-        if (p.innerText != message) return;
+        if (p.innerText.replaceAll(" ", "").length != message.replaceAll(" ", "").length) return;
     }
 
     messageContainer.appendChild(username);
@@ -433,7 +454,7 @@ function handleMessageHTML(html) {
     return html;
 }
 
-function sendMessage(message, isImage) {
+function sendMessage(message, isImage, fileName) {
     const previousMessage = chat.children[chat.children.length - 2];
 
     if (previousMessage && previousMessage.tagName === "DIV" && !previousMessage.getAttribute("sender_id")) {
@@ -443,8 +464,18 @@ function sendMessage(message, isImage) {
 
 
         if (isImage) {
-            p = document.createElement("img");
-            p.src = message;
+            if (message.startsWith("data:image")) {
+                p = document.createElement("img");
+                p.src = message;
+            } else {
+                const link = document.createElement("a");
+                link.href = message;
+                link.target = "_blank";
+                link.innerText = fileName || "View Image";
+                link.style.color = "white";
+                p = document.createElement("p");
+                p.appendChild(link);
+            }
         } else {
             p = document.createElement("p");
             p.innerHTML = handleMessageHTML(message);
@@ -462,18 +493,28 @@ function sendMessage(message, isImage) {
 
     const messageContainer = document.createElement("div");
     messageContainer.className = "message-container";
-    
+
     let p = null;
 
 
     if (isImage) {
-        p = document.createElement("img");
-        p.src = message;
+        if (message.startsWith("data:image")) {
+            p = document.createElement("img");
+            p.src = message;
+        } else {
+            const link = document.createElement("a");
+            link.href = message;
+            link.target = "_blank";
+            link.innerText = fileName || "View Image";
+            link.style.color = "white";
+            p = document.createElement("p");
+            p.appendChild(link);
+        }
     } else {
         p = document.createElement("p");
         p.innerHTML = handleMessageHTML(message);
 
-        if (p.innerText != message) return;
+        if (p.innerText.replaceAll(" ", "").length != message.replaceAll(" ", "").length) return;
     }
 
     messageContainer.appendChild(p);

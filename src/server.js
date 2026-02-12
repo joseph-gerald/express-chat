@@ -79,6 +79,7 @@ function handleConnection(client, request) {
                         emoji: emoji,
                         name: displayname,
                         content: json.content,
+                        file_name: json.name,
                         id
                     }));
                 }

@@ -13,6 +13,12 @@ window.fp = {
 
 let lastMessageTimestamp = Date.now();
 
+async function dataURItoBlob(dataURI) {
+    const response = await fetch(dataURI);
+    const blob = await response.blob();
+    return blob;
+}
+
 if (!displayname) {
     const elm = document.createElement("small");
     elm.innerHTML = "Create a display name to start chatting!";
@@ -283,7 +289,7 @@ function updateTyping(emoji, name, message, sender_id) {
     addToChat(elm);
 }
 
-function receiveMessage(emoji, name, message, sender_id, isImage, fileName) {
+async function receiveMessage(emoji, name, message, sender_id, isImage, fileName) {
     const previousMessage = chat.children[chat.children.length - 2];
 
     if (message == "") return;
@@ -301,9 +307,13 @@ function receiveMessage(emoji, name, message, sender_id, isImage, fileName) {
                     p.src = message;
                 } else {
                     const link = document.createElement("a");
-                    link.href = message;
+
+                    const blob = await dataURItoBlob(message);
+                    const url = URL.createObjectURL(blob);
+
+                    link.href = url;
                     link.target = "_blank";
-                    link.innerText = fileName || "View Image";
+                    link.innerText = fileName || "Nameless File Attachment";
                     p = document.createElement("p");
                     p.appendChild(link);
                 }
@@ -363,9 +373,13 @@ function receiveMessage(emoji, name, message, sender_id, isImage, fileName) {
             p.src = message;
         } else {
             const link = document.createElement("a");
-            link.href = message;
+
+            const blob = await dataURItoBlob(message);
+            const url = URL.createObjectURL(blob);
+
+            link.href = url;
             link.target = "_blank";
-            link.innerText = fileName || "View Image";
+            link.innerText = fileName || "Nameless File Attachment";
             p = document.createElement("p");
             p.appendChild(link);
         }
@@ -454,7 +468,7 @@ function handleMessageHTML(html) {
     return html;
 }
 
-function sendMessage(message, isImage, fileName) {
+async function sendMessage(message, isImage, fileName) {
     const previousMessage = chat.children[chat.children.length - 2];
 
     if (previousMessage && previousMessage.tagName === "DIV" && !previousMessage.getAttribute("sender_id")) {
@@ -469,9 +483,13 @@ function sendMessage(message, isImage, fileName) {
                 p.src = message;
             } else {
                 const link = document.createElement("a");
-                link.href = message;
+
+                const blob = await dataURItoBlob(message);
+                const url = URL.createObjectURL(blob);
+
+                link.href = url;
                 link.target = "_blank";
-                link.innerText = fileName || "View Image";
+                link.innerText = fileName || "Nameless File Attachment";
                 link.style.color = "white";
                 p = document.createElement("p");
                 p.appendChild(link);
@@ -503,9 +521,13 @@ function sendMessage(message, isImage, fileName) {
             p.src = message;
         } else {
             const link = document.createElement("a");
-            link.href = message;
+
+            const blob = await dataURItoBlob(message);
+            const url = URL.createObjectURL(blob);
+
+            link.href = url;
             link.target = "_blank";
-            link.innerText = fileName || "View Image";
+            link.innerText = fileName || "Nameless File Attachment";
             link.style.color = "white";
             p = document.createElement("p");
             p.appendChild(link);
